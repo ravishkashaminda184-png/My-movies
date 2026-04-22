@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <title>Details - CineMax</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0a0a0a; color: #fff; }
+        header { background: #0a0a0a; padding: 20px 5%; border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 28px; font-weight: 700; background: linear-gradient(90deg, #e50914, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; display: inline-block; }
+        .container { padding: 40px 5%; max-width: 1200px; margin: auto; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 30px; color: #e50914; text-decoration: none; font-weight: 500; }
+        .back-link:hover { color: #ff6b6b; }
+        .detail-wrapper { display: flex; gap: 50px; flex-wrap: wrap; margin-bottom: 50px; }
+        .poster { flex: 0 0 350px; }
+        .poster img { width: 100%; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .details { flex: 1; min-width: 300px; }
+        .details h1 { font-size: 42px; font-weight: 700; margin-bottom: 15px; }
+        .meta-info { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .meta { color: #aaa; font-size: 16px; }
+        .rating-box { background: linear-gradient(135deg, #1a1a1a, #0f0f0f); padding: 12px 20px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #222; }
+        .rating-box .star { color: #f5c518; font-size: 20px; }
+        .rating-box strong { font-size: 20px; }
+        .type-badge { background: #e50914; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .category-badge { background: #333; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+        .details p { line-height: 1.8; margin-bottom: 30px; color: #bbb; font-size: 15px; }
+        .btn-download { background: linear-gradient(90deg, #e50914, #c40812); color: white; padding: 16px 45px; border: none; border-radius: 8px; font-size: 18px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; transition: 0.3s; }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(229, 9, 20, 0.4); }
+        .episodes-section { margin-top: 50px; }
+        .episodes-section h2 { font-size: 28px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #222; }
+        .episode-grid { display: grid; gap: 15px; }
+        .episode-card { background: #141414; padding: 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; border: 1px solid #222; }
+        .episode-card:hover { background: #1a1a1a; border-color: #e50914; transform: translateX(5px); }
+        .episode-info h3 { font-size: 16px; margin-bottom: 5px; }
+        .episode-info p { color: #888; font-size: 13px; margin: 0; }
+        .btn-episode { background: #e50914; color: white; padding: 10px 25px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: 500; transition: 0.3s; }
+        .btn-episode:hover { background: #c40812; }
+        .not-found { text-align: center; padding: 80px 20px; }
+        .not-found h1 { font-size: 36px; margin-bottom: 20px; }
+        @media (max-width: 768px) {
+            .detail-wrapper { gap: 30px; }
+            .poster { flex: 1 1 100%; }
+            .details h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">CineMax</a>
+    </header>
+
+    <div class="container" id="detailContainer"></div>
+
+    <script>
+        const STORAGE_KEY = 'cinemax_content';
+        const urlParams = new URLSearchParams(window.location.search);
+        const contentId = parseInt(urlParams.get('id'));
+        const content = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        const item = content.find(c => c.id === contentId);
+        const detailContainer = document.getElementById('detailContainer');
+
+        if (item) {
+            document.title = item.name + ' - CineMax';
+            const typeBadge = item.type === 'tvshow' ? '<span class="type-badge">TV SHOW</span>' : '<span class="type-badge">MOVIE</span>';
+            
+            // Fix: Multiple categories support - පරණ data එකටත් වැඩ කරන්න
+            const categories = item.categories || (item.category ? [item.category] : []);
+            const categoriesHtml = categories.map(cat => `<span class="category-badge">${cat}</span>`).join('');
+            
+            let episodesHtml = '';
+            if (item.type === 'tvshow' && item.episodes && item.episodes.length > 0) {
+                episodesHtml = `
+                    <div class="episodes-section">
+                        <h2>Episodes (${item.episodes.length})</h2>
+                        <div class="episode-grid">
+                            ${item.episodes.map((ep, i) => `
+                                <div class="episode-card">
+                                    <div class="episode-info">
+                                        <h3>${ep.name}</h3>
+                                        <p>Click to download</p>
+                                    </div>
+                                    <a href="${ep.link}" class="btn-episode" target="_blank">⬇ Download</a>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (item.type === 'movie' && item.download) {
+                episodesHtml = `
+                    <a href="${item.download}" class="btn-download" target="_blank">
+                        <span>⬇</span> Download Now
+                    </a>
+                `;
+            }
+
+            detailContainer.innerHTML = `
+                <a href="index.html" class="back-link">← Back to Browse</a>
+                <div class="detail-wrapper">
+                    <div class="poster">
+                        <img src="${item.image}" alt="${item.name}">
+                    </div>
+                    <div class="details">
+                        <h1>${item.name}</h1>
+                        <div class="meta-info">
+                            ${typeBadge}
+                            ${categoriesHtml}
+                            <div class="meta">${item.year}</div>
+                            <div class="rating-box">
+                                <span class="star">⭐</span>
+                                <strong>${item.rating}</strong> / 10
+                            </div>
+                        </div>
+                        <p>${item.description}</p>
+                        ${episodesHtml}
+                    </div>
+                </div>
+            `;
+        } else {
+            detailContainer.innerHTML = `
+                <div class="not-found">
+                    <h1>😢 Content එක හමු නොවීය!</h1>
+                    <p style="color: #888; margin-bottom: 30px;">ඔබ සොයන Movie/TV Show එක දත්ත ගබඩාවේ නැත.</p>
+                    <a href="index.html" class="back-link">← Back to Browse</a>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
