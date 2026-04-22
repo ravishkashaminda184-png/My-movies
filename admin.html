@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <title>CineMax Admin - CMS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial; }
+        body { background: #0f0f0f; color: #fff; padding: 40px; }
+       .container { max-width: 900px; margin: auto; background: #1a1a1a; padding: 30px; border-radius: 10px; }
+        h1 { color: #e50914; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+       .btn-new { background: #0d7e3e; padding: 10px 20px; font-size: 14px; border: none; border-radius: 5px; color: #fff; cursor: pointer; }
+       .btn-new:hover { background: #0a6330; }
+       .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #aaa; font-size: 14px; }
+        input, textarea, select { width: 100%; padding: 10px; background: #0f0f0f; border: 1px solid #333; border-radius: 5px; color: #fff; font-size: 14px; }
+        textarea { height: 80px; resize: vertical; }
+       .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+       .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; background: #0f0f0f; padding: 15px; border-radius: 5px; border: 1px solid #333; }
+       .category-item { display: flex; align-items: center; gap: 8px; }
+       .category-item input[type="checkbox"] { width: auto; cursor: pointer; }
+       .category-item label { margin: 0; cursor: pointer; font-size: 13px; }
+       .selected-cats { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+       .cat-tag { background: #e50914; padding: 4px 10px; border-radius: 12px; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; }
+       .cat-tag.remove { cursor: pointer; font-weight: bold; }
+       .btn { background: #e50914; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; width: 100%; margin-top: 10px; font-size: 15px; font-weight: 600; }
+       .btn:hover { background: #c40812; }
+       .btn-small { padding: 8px 15px; font-size: 13px; width: auto; margin-top: 5px; }
+       .btn-edit { background: #0d6efd; }
+       .btn-edit:hover { background: #0b5ed7; }
+       .btn-del { background: #555; }
+       .btn-del:hover { background: #dc3545; }
+       .btn-cancel { background: #555; margin-left: 10px; }
+       .link { display: block; text-align: center; margin-top: 20px; color: #e50914; text-decoration: none; }
+        #contentList { margin-top: 30px; }
+       .content-item { background: #0f0f0f; padding: 20px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #222; }
+       .content-item-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
+       .content-info h3 { font-size: 18px; margin-bottom: 8px; }
+       .content-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+       .badge { padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+       .badge-type { background: #e50914; }
+       .badge-category { background: #444; }
+       .badge-rating { background: #f5c518; color: #000; }
+       .content-actions { display: flex; gap: 8px; }
+       .episode-section { background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
+       .episode-item { display: flex; gap: 10px; margin-bottom: 10px; }
+       .episode-item input { flex: 1; }
+       .form-section { display: none; }
+       .form-section.active { display: block; animation: slideDown 0.3s ease; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+       .edit-mode { border: 2px solid #0d6efd; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+       .edit-mode h2 { color: #0d6efd; margin-bottom: 15px; font-size: 20px; }
+       .empty-state { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            CineMax Admin CMS
+            <button class="btn-new" onclick="showAddForm()">+ New Content</button>
+        </h1>
+
+        <div class="form-section" id="formSection">
+            <div class="edit-mode" id="editModeHeader" style="display:none;">
+                <h2>✏️ Edit Mode - ID: <span id="editId"></span></h2>
+            </div>
+
+            <form id="contentForm">
+                <input type="hidden" id="editContentId">
+                <div class="form-group">
+                    <label>Content Type</label>
+                    <select id="contentType" required>
+                        <option value="movie">Movie</option>
+                        <option value="tvshow">TV Show</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Categories / Genres (කිහිපයක් select කරන්න)</label>
+                    <div class="category-grid">
+                        <div class="category-item"><input type="checkbox" id="cat1" value="Action"><label for="cat1">Action</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat2" value="Comedy"><label for="cat2">Comedy</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat3" value="Drama"><label for="cat3">Drama</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat4" value="Horror"><label for="cat4">Horror</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat5" value="Sci-Fi"><label for="cat5">Sci-Fi</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat6" value="Romance"><label for="cat6">Romance</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat7" value="Thriller"><label for="cat7">Thriller</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat8" value="Animation"><label for="cat8">Animation</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat9" value="Documentary"><label for="cat9">Documentary</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat10" value="Fantasy"><label for="cat10">Fantasy</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat11" value="Crime"><label for="cat11">Crime</label></div>
+                        <div class="category-item"><input type="checkbox" id="cat12" value="Adventure"><label for="cat12">Adventure</label></div>
+                    </div>
+                    <div class="selected-cats" id="selectedCats"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="contentName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Year</label>
+                        <input type="text" id="contentYear" placeholder="2024" required>
+                    </div>
+                    <div class="form-group">
+                        <label>IMDb Rating</label>
+                        <input type="text" id="contentRating" placeholder="8.5" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Poster URL</label>
+                    <input type="url" id="contentImage" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="contentDesc" required></textarea>
+                </div>
+
+                <div class="form-group" id="movieDownloadGroup">
+                    <label>Download Link</label>
+                    <input type="url" id="contentDownload" placeholder="https://example.com/movie.mp4">
+                </div>
+
+                <div class="episode-section" id="episodeSection">
+                    <h3 style="margin-bottom:15px;">Episodes</h3>
+                    <div id="episodeList"></div>
+                    <button type="button" class="btn btn-small" onclick="addEpisodeField()">+ Add Episode</button>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn" id="submitBtn">Content Add කරන්න</button>
+                    <button type="button" class="btn btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <a href="index.html" target="_blank" class="link">Public Site එක බලන්න →</a>
+
+        <div id="contentList">
+            <h3 style="margin-bottom:20px;">All Content</h3>
+            <div id="contentItems"></div>
+        </div>
+    </div>
+
+    <script>
+        // Fix: එකම key එක පාවිච්චි කරනවා
+        const STORAGE_KEY = 'cinemax_content';
+        let content = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+        const contentForm = document.getElementById('contentForm');
+        const contentItems = document.getElementById('contentItems');
+        const contentType = document.getElementById('contentType');
+        const episodeSection = document.getElementById('episodeSection');
+        const movieDownloadGroup = document.getElementById('movieDownloadGroup');
+        const episodeList = document.getElementById('episodeList');
+        const formSection = document.getElementById('formSection');
+        const editModeHeader = document.getElementById('editModeHeader');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const selectedCatsDiv = document.getElementById('selectedCats');
+        let isEditMode = false;
+
+        // Category checkbox change
+        document.querySelectorAll('.category-item input').forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCats);
+        });
+
+        function updateSelectedCats() {
+            const selected = Array.from(document.querySelectorAll('.category-item input:checked')).map(cb => cb.value);
+            selectedCatsDiv.innerHTML = selected.map(cat =>
+                `<span class="cat-tag">${cat} <span class="remove" onclick="removeCategory('${cat}')">×</span></span>`
+            ).join('');
+        }
+
+        function removeCategory(cat) {
+            document.querySelector(`.category-item input[value="${cat}"]`).checked = false;
+            updateSelectedCats();
+        }
+
+        function showAddForm() {
+            formSection.classList.add('active');
+            resetForm();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            resetForm();
+            formSection.classList.remove('active');
+        }
+
+        function resetForm() {
+            contentForm.reset();
+            document.getElementById('editContentId').value = '';
+            episodeList.innerHTML = '';
+            episodeSection.style.display = 'none';
+            movieDownloadGroup.style.display = 'block';
+            editModeHeader.style.display = 'none';
+            submitBtn.textContent = 'Content Add කරන්න';
+            cancelBtn.style.display = 'none';
+            document.querySelectorAll('.category-item input').forEach(cb => cb.checked = false);
+            selectedCatsDiv.innerHTML = '';
+            isEditMode = false;
+        }
+
+        contentType.addEventListener('change', function() {
+            if (this.value === 'tvshow') {
+                episodeSection.style.display = 'block';
+                movieDownloadGroup.style.display = 'none';
+                document.getElementById('contentDownload').required = false;
+            } else {
+                episodeSection.style.display = 'none';
+                movieDownloadGroup.style.display = 'block';
+                document.getElementById('contentDownload').required = true;
+            }
+        });
+
+        function addEpisodeField(name = '', link = '') {
+            const epIndex = episodeList.children.length + 1;
+            const epDiv = document.createElement('div');
+            epDiv.className = 'episode-item';
+            epDiv.innerHTML = `
+                <input type="text" placeholder="S01E${epIndex}" class="ep-name" value="${name}" required>
+                <input type="url" placeholder="Download Link" class="ep-link" value="${link}" required>
+                <button type="button" class="btn btn-small btn-del" onclick="this.parentElement.remove()">X</button>
+            `;
+            episodeList.appendChild(epDiv);
+        }
+
+        function renderContentList() {
+            if (content.length === 0) {
+                contentItems.innerHTML = '<div class="empty-state">තවම Content නෑ. "New Content" button එක click කරලා add කරන්න.</div>';
+                return;
+            }
+
+            contentItems.innerHTML = '';
+            content.forEach((item, index) => {
+                let episodesCount = '';
+                if (item.type === 'tvshow' && item.episodes) {
+                    episodesCount = `<div style="font-size:12px;color:#888;margin-top:8px;">📺 ${item.episodes.length} Episodes</div>`;
+                }
+
+                // Fix: categories array එක handle කරනවා
+                const cats = item.categories || [item.category] || [];
+                const categoriesHtml = cats.map(cat => `<span class="badge badge-category">${cat}</span>`).join('');
+
+                const div = document.createElement('div');
+                div.className = 'content-item';
+                div.innerHTML = `
+                    <div class="content-item-header">
+                        <div class="content-info">
+                            <h3>${item.name}</h3>
+                            <div class="content-meta">
+                                <span class="badge badge-type">${item.type === 'tvshow'? 'TV SHOW' : 'MOVIE'}</span>
+                                ${categoriesHtml}
+                                <span class="badge badge-rating">⭐ ${item.rating}</span>
+                                <span class="badge" style="background:#333;">${item.year}</span>
+                            </div>
+                            ${episodesCount}
+                        </div>
+                        <div class="content-actions">
+                            <button class="btn btn-small btn-edit" onclick="editContent(${index})">Edit</button>
+                            <button class="btn btn-small btn-del" onclick="deleteContent(${index})">Delete</button>
+                        </div>
+                    </div>
+                `;
+                contentItems.appendChild(div);
+            });
+        }
+
+        function editContent(index) {
+            const item = content[index];
+            isEditMode = true;
+
+            formSection.classList.add('active');
+            editModeHeader.style.display = 'block';
+            document.getElementById('editId').textContent = item.id;
+            submitBtn.textContent = 'Update කරන්න';
+            cancelBtn.style.display = 'block';
+
+            document.getElementById('editContentId').value = item.id;
+            document.getElementById('contentType').value = item.type;
+            document.getElementById('contentName').value = item.name;
+            document.getElementById('contentYear').value = item.year;
+            document.getElementById('contentRating').value = item.rating;
+            document.getElementById('contentImage').value = item.image;
+            document.getElementById('contentDesc').value = item.description;
+
+            // Categories tick කරනවා
+            const cats = item.categories || [item.category] || [];
+            document.querySelectorAll('.category-item input').forEach(cb => {
+                cb.checked = cats.includes(cb.value);
+            });
+            updateSelectedCats();
+
+            if (item.type === 'tvshow') {
+                episodeSection.style.display = 'block';
+                movieDownloadGroup.style.display = 'none';
+                document.getElementById('contentDownload').required = false;
+                episodeList.innerHTML = '';
+                if (item.episodes) {
+                    item.episodes.forEach(ep => addEpisodeField(ep.name, ep.link));
+                }
+            } else {
+                episodeSection.style.display = 'none';
+                movieDownloadGroup.style.display = 'block';
+                document.getElementById('contentDownload').required = true;
+                document.getElementById('contentDownload').value = item.download || '';
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        contentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const selectedCategories = Array.from(document.querySelectorAll('.category-item input:checked')).map(cb => cb.value);
+
+            if (selectedCategories.length === 0) {
+                alert('කරුණාකර අවම වශයෙන් Category එකක්වත් select කරන්න!');
+                return;
+            }
+
+            const type = document.getElementById('contentType').value;
+            const editId = document.getElementById('editContentId').value;
+
+            const contentData = {
+                id: editId? parseInt(editId) : Date.now(),
+                type: type,
+                categories: selectedCategories, // Array එකක් විදියට save කරනවා
+                name: document.getElementById('contentName').value,
+                year: document.getElementById('contentYear').value,
+                rating: document.getElementById('contentRating').value,
+                image: document.getElementById('contentImage').value,
+                description: document.getElementById('contentDesc').value
+            };
+
+            if (type === 'movie') {
+                contentData.download = document.getElementById('contentDownload').value;
+            } else {
+                const episodes = [];
+                document.querySelectorAll('.episode-item').forEach(ep => {
+                    const name = ep.querySelector('.ep-name').value;
+                    const link = ep.querySelector('.ep-link').value;
+                    if (name && link) episodes.push({ name, link });
+                });
+                contentData.episodes = episodes;
+            }
+
+            if (isEditMode) {
+                const index = content.findIndex(c => c.id === parseInt(editId));
+                content[index] = contentData;
+                alert('Content එක සාර්ථකව Update කළා!');
+            } else {
+                content.push(contentData);
+                alert('Content එක සාර්ථකව Add කළා!');
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+            resetForm();
+            formSection.classList.remove('active');
+            renderContentList();
+        });
+
+        function deleteContent(index) {
+            if(confirm(`"${content[index].name}" Delete කරන්නම ඕනද?`)) {
+                content.splice(index, 1);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+                renderContentList();
+            }
+        }
+
+        renderContentList();
+    </script>
+</body>
+  </html>
