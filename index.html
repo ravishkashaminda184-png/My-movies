@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMax - Premium Streaming</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body { background: #0a0a0a; color: #fff; overflow-x: hidden; }
+        header { background: linear-gradient(180deg, rgba(10,10,10,0.9) 0%, transparent 100%); padding: 20px 5%; position: fixed; width: 100%; top: 0; z-index: 1000; backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+        header.scrolled { background: #0a0a0a; }
+       .logo { font-size: 32px; font-weight: 700; background: linear-gradient(90deg, #e50914, #ff6b6b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+       .search-box { position: relative; }
+       .search-box input { padding: 12px 45px 12px 20px; width: 320px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 30px; color: #fff; font-size: 14px; transition: 0.3s; }
+       .search-box input:focus { outline: none; background: rgba(255,255,255,0.15); border-color: #e50914; width: 380px; }
+       .search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #999; }
+       .hero { height: 70vh; background: linear-gradient(to bottom, transparent 60%, #0a0a0a 100%), linear-gradient(to right, #0a0a0a 0%, transparent 50%), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600') center/cover; display: flex; align-items: flex-end; padding: 0 5% 60px; margin-bottom: 20px; }
+       .hero-content h1 { font-size: 56px; font-weight: 700; margin-bottom: 15px; text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+       .hero-content p { font-size: 18px; color: #ddd; max-width: 600px; line-height: 1.6; }
+       .container { padding: 20px 5% 60px; }
+       .filters { margin-bottom: 30px; }
+       .filter-group { margin-bottom: 20px; }
+       .filter-label { font-size: 14px; color: #888; margin-bottom: 10px; font-weight: 500; }
+       .filter-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+       .filter-btn { padding: 10px 20px; background: #1a1a1a; border: 1px solid #333; border-radius: 25px; color: #fff; cursor: pointer; transition: 0.3s; font-size: 14px; font-weight: 500; }
+       .filter-btn:hover { background: #222; border-color: #e50914; }
+       .filter-btn.active { background: #e50914; border-color: #e50914; }
+       .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+       .section-header h2 { font-size: 26px; font-weight: 600; }
+        #resultCount { color: #888; font-size: 14px; }
+       .loading { text-align: center; padding: 60px; grid-column: 1 / -1; }
+       .spinner { width: 50px; height: 50px; border: 4px solid #222; border-top: 4px solid #e50914; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+       .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; min-height: 400px; }
+       .movie-card { background: #141414; border-radius: 12px; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; text-decoration: none; color: #fff; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.4); animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+       .movie-card:hover { transform: translateY(-10px) scale(1.03); box-shadow: 0 15px 40px rgba(229, 9, 20, 0.4); z-index: 10; }
+       .poster-wrapper { position: relative; overflow: hidden; }
+       .movie-card img { width: 100%; height: 320px; object-fit: cover; transition: 0.4s; }
+       .movie-card:hover img { transform: scale(1.1); filter: brightness(0.7); }
+       .rating { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); padding: 6px 10px; border-radius: 8px; font-size: 13px; font-weight: 600; z-index: 2; border: 1px solid rgba(245, 197, 24, 0.3); }
+       .rating.star { color: #f5c518; margin-right: 3px; }
+       .type-badge { position: absolute; top: 12px; left: 12px; background: #e50914; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; z-index: 2; }
+       .overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); padding: 40px 15px 15px; opacity: 0; transition: 0.3s; }
+       .movie-card:hover.overlay { opacity: 1; }
+       .play-btn { background: #e50914; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 20px; }
+       .movie-info { padding: 18px; }
+       .movie-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+       .movie-info p { font-size: 13px; color: #888; margin-bottom: 8px; }
+       .category-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+       .category-tag { background: #222; padding: 3px 8px; border-radius: 10px; font-size: 10px; color: #aaa; }
+       .empty { text-align: center; color: #555; padding: 80px 20px; grid-column: 1 / -1; font-size: 18px; }
+        @media (max-width: 768px) {.hero-content h1 { font-size: 36px; }.search-box input { width: 200px; }.search-box input:focus { width: 250px; }.movie-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }.movie-card img { height: 240px; }.filter-buttons { gap: 8px; }.filter-btn { padding: 8px 15px; font-size: 13px; } }
+    </style>
+</head>
+<body>
+    <header id="header">
+        <div class="logo">CineMax</div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search Movies, TV Shows...">
+            <span class="search-icon">🔍</span>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Stream Everything</h1>
+            <p>Movies, TV Shows, Documentaries - All in one place. Filter, Search, Watch.</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="filters">
+            <div class="filter-group">
+                <div class="filter-label">Content Type</div>
+                <div class="filter-buttons" id="typeFilters">
+                    <button class="filter-btn active" data-type="all">All</button>
+                    <button class="filter-btn" data-type="movie">Movies</button>
+                    <button class="filter-btn" data-type="tvshow">TV Shows</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">Categories</div>
+                <div class="filter-buttons" id="categoryFilters">
+                    <button class="filter-btn active" data-category="all">All</button>
+                    <button class="filter-btn" data-category="Action">Action</button>
+                    <button class="filter-btn" data-category="Comedy">Comedy</button>
+                    <button class="filter-btn" data-category="Drama">Drama</button>
+                    <button class="filter-btn" data-category="Horror">Horror</button>
+                    <button class="filter-btn" data-category="Sci-Fi">Sci-Fi</button>
+                    <button class="filter-btn" data-category="Romance">Romance</button>
+                    <button class="filter-btn" data-category="Thriller">Thriller</button>
+                    <button class="filter-btn" data-category="Animation">Animation</button>
+                    <button class="filter-btn" data-category="Fantasy">Fantasy</button>
+                    <button class="filter-btn" data-category="Crime">Crime</button>
+                    <button class="filter-btn" data-category="Adventure">Adventure</button>
+                </div>
+            </div>
+        </div>
+
+        <section class="movies">
+            <div class="section-header">
+                <h2 id="movieHeading">Browse All</h2>
+                <span id="resultCount"></span>
+            </div>
+            <div class="movie-grid" id="movieGrid"></div>
+        </section>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'cinemax_content';
+        const content = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        const movieGrid = document.getElementById('movieGrid');
+        const searchInput = document.getElementById('searchInput');
+        const movieHeading = document.getElementById('movieHeading');
+        const resultCount = document.getElementById('resultCount');
+        const header = document.getElementById('header');
+
+        let currentType = 'all';
+        let currentCategory = 'all';
+        let currentSearch = '';
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) header.classList.add('scrolled');
+            else header.classList.remove('scrolled');
+        });
+
+        function showLoading() {
+            movieGrid.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading content...</p>
+                </div>
+            `;
+        }
+
+        function displayContent() {
+            showLoading();
+
+            setTimeout(() => {
+                let filtered = content;
+
+                if (currentType!== 'all') {
+                    filtered = filtered.filter(item => item.type === currentType);
+                }
+
+                // Fix: Multiple categories support
+                if (currentCategory!== 'all') {
+                    filtered = filtered.filter(item => {
+                        const cats = item.categories || [item.category] || [];
+                        return cats.includes(currentCategory);
+                    });
+                }
+
+                if (currentSearch) {
+                    const search = currentSearch.toLowerCase();
+                    filtered = filtered.filter(item => {
+                        const cats = item.categories || [item.category] || [];
+                        return item.name.toLowerCase().includes(search) ||
+                               cats.some(cat => cat.toLowerCase().includes(search)) ||
+                               item.year.toLowerCase().includes(search);
+                    });
+                }
+
+                movieGrid.innerHTML = '';
+                resultCount.textContent = `${filtered.length} Results`;
+
+                if (filtered.length === 0) {
+                    movieGrid.innerHTML = '<p class="empty">😢 No results found! Try different filters.</p>';
+                    return;
+                }
+
+                filtered.forEach((item, index) => {
+                    const badge = item.type === 'tvshow'? '<div class="type-badge">TV</div>' : '';
+                    const cats = item.categories || [item.category] || [];
+                    const categoriesHtml = cats.map(cat => `<span class="category-tag">${cat}</span>`).join('');
+
+                    const card = document.createElement('a');
+                    card.href = `detail.html?id=${item.id}`;
+                    card.className = 'movie-card';
+                    card.style.animationDelay = `${index * 0.05}s`;
+                    card.innerHTML = `
+                        <div class="poster-wrapper">
+                            ${badge}
+                            <div class="rating"><span class="star">⭐</span>${item.rating}</div>
+                            <img src="${item.image}" alt="${item.name}" loading="lazy">
+                            <div class="overlay">
+                                <div class="play-btn">▶</div>
+                            </div>
+                        </div>
+                        <div class="movie-info">
+                            <h3>${item.name}</h3>
+                            <p>${item.year}</p>
+                            <div class="category-tags">${categoriesHtml}</div>
+                        </div>
+                    `;
+                    movieGrid.appendChild(card);
+                });
+            }, 400);
+        }
+
+        searchInput.addEventListener('input', function(e) {
+            currentSearch = e.target.value;
+            movieHeading.textContent = currentSearch? `Results for "${currentSearch}"` : 'Browse All';
+            displayContent();
+        });
+
+        document.querySelectorAll('#typeFilters.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#typeFilters.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentType = this.dataset.type;
+                displayContent();
+            });
+        });
+
+        document.querySelectorAll('#categoryFilters.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#categoryFilters.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentCategory = this.dataset.category;
+                displayContent();
+            });
+        });
+
+        displayContent();
+    </script>
+</body>
+</html>
